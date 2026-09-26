@@ -1071,6 +1071,8 @@ dropped.
 
 ```python
 # tests/test_providers_osm.py
+from urllib.parse import parse_qs
+
 import httpx
 
 from app.providers.osm_overpass import OverpassError, fetch_places
@@ -1184,7 +1186,11 @@ def test_fetch_places_bank_atm_covers_both_tags_in_one_query():
     captured = {}
 
     def handler(request):
-        captured["body"] = request.content.decode()
+        # The Overpass query is sent as a form-encoded `data` field, per
+        # standard Overpass API usage (`curl -d "data=<query>" ...`), so
+        # decode the form body rather than substring-matching the raw
+        # request content.
+        captured["query"] = parse_qs(request.content.decode())["data"][0]
         return httpx.Response(200, json={"elements": []})
 
     client = make_client(handler)
@@ -1193,8 +1199,8 @@ def test_fetch_places_bank_atm_covers_both_tags_in_one_query():
         categories=["bank_atm"], sleep=lambda s: None,
     )
 
-    assert '"amenity"="bank"' in captured["body"]
-    assert '"amenity"="atm"' in captured["body"]
+    assert '"amenity"="bank"' in captured["query"]
+    assert '"amenity"="atm"' in captured["query"]
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
