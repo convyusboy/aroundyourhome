@@ -1,0 +1,45 @@
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+#search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+  margin-bottom: 1rem;
+}
+
+#categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  border: 1px solid #ddd;
+}
+
+#status {
+  color: #a33;
+}
+
+#map {
+  height: 400px;
+  margin: 1rem 0;
+}
+
+#results {
+  list-style: none;
+  padding: 0;
+}
+
+#results li {
+  border-bottom: 1px solid #ddd;
+  padding: 0.5rem 0;
+}
+
+#results .source {
+  color: #777;
+  font-size: 0.85em;
+}
