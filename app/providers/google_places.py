@@ -59,20 +59,23 @@ def fetch_places(
         for google_type in CATEGORY_TO_GOOGLE_TYPES[category]
     })
 
-    response = client.post(
-        SEARCH_NEARBY_URL,
-        headers={"X-Goog-Api-Key": api_key, "X-Goog-FieldMask": FIELD_MASK},
-        json={
-            "includedTypes": included_types,
-            "maxResultCount": 20,
-            "locationRestriction": {
-                "circle": {
-                    "center": {"latitude": lat, "longitude": lng},
-                    "radius": radius_m,
-                }
+    try:
+        response = client.post(
+            SEARCH_NEARBY_URL,
+            headers={"X-Goog-Api-Key": api_key, "X-Goog-FieldMask": FIELD_MASK},
+            json={
+                "includedTypes": included_types,
+                "maxResultCount": 20,
+                "locationRestriction": {
+                    "circle": {
+                        "center": {"latitude": lat, "longitude": lng},
+                        "radius": radius_m,
+                    }
+                },
             },
-        },
-    )
+        )
+    except httpx.HTTPError as exc:
+        raise GooglePlacesError(f"Google Places API request failed: {exc}") from exc
 
     if response.status_code != 200:
         raise GooglePlacesError(

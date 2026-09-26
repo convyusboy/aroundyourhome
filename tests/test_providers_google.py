@@ -82,6 +82,24 @@ def test_fetch_places_raises_on_non_200_status():
         pass
 
 
+def test_fetch_places_raises_google_places_error_on_network_failure():
+    # A connection-level failure (DNS, timeout, TLS handshake, ...) must be
+    # wrapped as GooglePlacesError so callers can catch one exception type,
+    # instead of an unhandled httpx.TransportError crashing the request.
+    def handler(request):
+        raise httpx.ConnectTimeout("connect timed out")
+
+    client = make_client(handler)
+    try:
+        fetch_places(
+            client, api_key="fake-key", lat=-6.2, lng=106.8, radius_m=1000,
+            categories=["park"],
+        )
+        assert False, "expected GooglePlacesError"
+    except GooglePlacesError:
+        pass
+
+
 def test_fetch_places_attributes_bank_atm_types_to_one_category():
     def handler(request):
         return httpx.Response(

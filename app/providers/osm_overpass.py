@@ -62,7 +62,10 @@ def fetch_places(
 
     attempt = 0
     while True:
-        response = client.post(OVERPASS_URL, data={"data": query})
+        try:
+            response = client.post(OVERPASS_URL, data={"data": query})
+        except httpx.HTTPError as exc:
+            raise OverpassError(f"Overpass API request failed: {exc}") from exc
         if response.status_code == 200:
             break
         if response.status_code in (429, 504) and attempt < max_retries:

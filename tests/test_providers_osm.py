@@ -109,6 +109,24 @@ def test_fetch_places_raises_after_retry_exhausted():
         pass
 
 
+def test_fetch_places_raises_overpass_error_on_network_failure():
+    # A connection-level failure (DNS, timeout, TLS handshake, ...) must be
+    # wrapped as OverpassError so callers can catch one exception type,
+    # instead of an unhandled httpx.TransportError crashing the request.
+    def handler(request):
+        raise httpx.ConnectTimeout("connect timed out")
+
+    client = make_client(handler)
+    try:
+        fetch_places(
+            client, lat=-6.2, lng=106.8, radius_m=1000,
+            categories=["hospital"], sleep=lambda s: None,
+        )
+        assert False, "expected OverpassError"
+    except OverpassError:
+        pass
+
+
 def test_fetch_places_bank_atm_covers_both_tags_in_one_query():
     captured = {}
 
