@@ -888,6 +888,24 @@ def test_fetch_places_raises_on_non_200_status():
         pass
 
 
+def test_fetch_places_raises_google_places_error_on_network_failure():
+    # A connection-level failure (DNS, timeout, TLS handshake, ...) must be
+    # wrapped as GooglePlacesError so callers can catch one exception type,
+    # instead of an unhandled httpx.TransportError crashing the request.
+    def handler(request):
+        raise httpx.ConnectTimeout("connect timed out")
+
+    client = make_client(handler)
+    try:
+        fetch_places(
+            client, api_key="fake-key", lat=-6.2, lng=106.8, radius_m=1000,
+            categories=["park"],
+        )
+        assert False, "expected GooglePlacesError"
+    except GooglePlacesError:
+        pass
+
+
 def test_fetch_places_attributes_bank_atm_types_to_one_category():
     def handler(request):
         return httpx.Response(
@@ -982,20 +1000,23 @@ def fetch_places(
         for google_type in CATEGORY_TO_GOOGLE_TYPES[category]
     })
 
-    response = client.post(
-        SEARCH_NEARBY_URL,
-        headers={"X-Goog-Api-Key": api_key, "X-Goog-FieldMask": FIELD_MASK},
-        json={
-            "includedTypes": included_types,
-            "maxResultCount": 20,
-            "locationRestriction": {
-                "circle": {
-                    "center": {"latitude": lat, "longitude": lng},
-                    "radius": radius_m,
-                }
+    try:
+        response = client.post(
+            SEARCH_NEARBY_URL,
+            headers={"X-Goog-Api-Key": api_key, "X-Goog-FieldMask": FIELD_MASK},
+            json={
+                "includedTypes": included_types,
+                "maxResultCount": 20,
+                "locationRestriction": {
+                    "circle": {
+                        "center": {"latitude": lat, "longitude": lng},
+                        "radius": radius_m,
+                    }
+                },
             },
-        },
-    )
+        )
+    except httpx.HTTPError as exc:
+        raise GooglePlacesError(f"Google Places API request failed: {exc}") from exc
 
     if response.status_code != 200:
         raise GooglePlacesError(
@@ -1037,7 +1058,7 @@ def fetch_places(
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pytest tests/test_providers_google.py -v`
-Expected: PASS (4 passed)
+Expected: PASS (5 passed)
 
 - [ ] **Step 5: Commit**
 
@@ -1182,6 +1203,24 @@ def test_fetch_places_raises_after_retry_exhausted():
         pass
 
 
+def test_fetch_places_raises_overpass_error_on_network_failure():
+    # A connection-level failure (DNS, timeout, TLS handshake, ...) must be
+    # wrapped as OverpassError so callers can catch one exception type,
+    # instead of an unhandled httpx.TransportError crashing the request.
+    def handler(request):
+        raise httpx.ConnectTimeout("connect timed out")
+
+    client = make_client(handler)
+    try:
+        fetch_places(
+            client, lat=-6.2, lng=106.8, radius_m=1000,
+            categories=["hospital"], sleep=lambda s: None,
+        )
+        assert False, "expected OverpassError"
+    except OverpassError:
+        pass
+
+
 def test_fetch_places_bank_atm_covers_both_tags_in_one_query():
     captured = {}
 
@@ -1276,7 +1315,10 @@ def fetch_places(
 
     attempt = 0
     while True:
-        response = client.post(OVERPASS_URL, data={"data": query})
+        try:
+            response = client.post(OVERPASS_URL, data={"data": query})
+        except httpx.HTTPError as exc:
+            raise OverpassError(f"Overpass API request failed: {exc}") from exc
         if response.status_code == 200:
             break
         if response.status_code in (429, 504) and attempt < max_retries:
@@ -1320,7 +1362,7 @@ def fetch_places(
 - [ ] **Step 4: Run test to verify it passes**
 
 Run: `pytest tests/test_providers_osm.py -v`
-Expected: PASS (5 passed)
+Expected: PASS (6 passed)
 
 - [ ] **Step 5: Commit**
 
@@ -2269,7 +2311,7 @@ docker-compose up --build
 pytest -v
 ```
 
-Expected: all tests from Tasks 2–11 pass (44 passed).
+Expected: all tests from Tasks 2–11 pass (46 passed).
 
 - [ ] **Step 5: Commit**
 
@@ -2285,3 +2327,4 @@ git commit -m "chore: add Dockerfile, docker-compose, and README"
 - **Radius filtering implementation:** done in Python via `haversine_m` rather than Mongo geospatial operators, to keep `mongomock` test coverage reliable (Task 5 note). The `2dsphere` index is still created per PRD's architecture section.
 - **Google Place Types (New) strings:** `CATEGORY_TO_GOOGLE_TYPES` in Task 6 uses the same type strings as the old plan's Legacy mapping; these should be verified against Google's current Place Types (New) reference table while implementing Task 6, since the New API's taxonomy differs slightly from Legacy's (tracked in PRD 12).
 - **Coverage-record granularity:** `search_coverage` records the exact `(category, center, radius_m)` that was queried; "fresh" means a past record's circle *contains* the requested circle (Task 5). A request whose circle is only partially covered by past records (e.g. straddling two previous searches, neither of which alone contains it) is treated as not covered and re-fetched in full — simpler than computing partial/union coverage, and safe (never under-fetches), at the cost of occasionally re-fetching an area that was, in aggregate, already covered by more than one prior search.
+- **Provider network-failure handling (Tasks 6 & 7):** both `fetch_places` implementations wrap the outbound HTTP call itself in `try/except httpx.HTTPError`, converting a connection-level failure (timeout, DNS, TLS handshake) into `GooglePlacesError`/`OverpassError`. This wasn't in the original mocked-response test suite — every test used `httpx.MockTransport`, which never raises a transport error, only ever returns a `Response` object — so the gap only surfaced during a live manual run against docker-compose, where Overpass was genuinely unreachable and the missing wrapper caused an unhandled `httpx.ConnectTimeout` to propagate all the way to a 500, instead of degrading to `partial: true` per PRD 5.7. Fixed in both providers with a regression test each (`..._raises_..._error_on_network_failure`) that simulates the handler raising instead of returning.
