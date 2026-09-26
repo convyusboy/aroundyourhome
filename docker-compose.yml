@@ -1,0 +1,22 @@
+services:
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY:-}
+      CACHE_TTL_DAYS: ${CACHE_TTL_DAYS:-14}
+      DEFAULT_RADIUS_M: ${DEFAULT_RADIUS_M:-1500}
+    depends_on:
+      - mongo
+
+volumes:
+  mongo_data:
