@@ -1974,7 +1974,10 @@ async def lifespan(app: FastAPI):
     app.state.mongo_client = client
     app.state.collection = collection
     app.state.coverage_collection = coverage_collection
-    app.state.http_client = httpx.Client(timeout=10.0)
+    # Must exceed the Overpass query's own [timeout:25] budget (see
+    # app/providers/osm_overpass.py) or the client aborts a legitimately
+    # slow-but-successful Overpass response before the server would.
+    app.state.http_client = httpx.Client(timeout=30.0)
 
     yield
 
@@ -2328,3 +2331,4 @@ git commit -m "chore: add Dockerfile, docker-compose, and README"
 - **Google Place Types (New) strings:** `CATEGORY_TO_GOOGLE_TYPES` in Task 6 uses the same type strings as the old plan's Legacy mapping; these should be verified against Google's current Place Types (New) reference table while implementing Task 6, since the New API's taxonomy differs slightly from Legacy's (tracked in PRD 12).
 - **Coverage-record granularity:** `search_coverage` records the exact `(category, center, radius_m)` that was queried; "fresh" means a past record's circle *contains* the requested circle (Task 5). A request whose circle is only partially covered by past records (e.g. straddling two previous searches, neither of which alone contains it) is treated as not covered and re-fetched in full — simpler than computing partial/union coverage, and safe (never under-fetches), at the cost of occasionally re-fetching an area that was, in aggregate, already covered by more than one prior search.
 - **Provider network-failure handling (Tasks 6 & 7):** both `fetch_places` implementations wrap the outbound HTTP call itself in `try/except httpx.HTTPError`, converting a connection-level failure (timeout, DNS, TLS handshake) into `GooglePlacesError`/`OverpassError`. This wasn't in the original mocked-response test suite — every test used `httpx.MockTransport`, which never raises a transport error, only ever returns a `Response` object — so the gap only surfaced during a live manual run against docker-compose, where Overpass was genuinely unreachable and the missing wrapper caused an unhandled `httpx.ConnectTimeout` to propagate all the way to a 500, instead of degrading to `partial: true` per PRD 5.7. Fixed in both providers with a regression test each (`..._raises_..._error_on_network_failure`) that simulates the handler raising instead of returning.
+- **Shared HTTP client timeout (Task 10):** the Overpass query built in Task 7 embeds `[timeout:25]`, telling the Overpass server it may take up to 25s to answer — but the shared `httpx.Client` in `app/main.py`'s lifespan was originally configured with `timeout=10.0`. A real batched query across all 11 categories in a dense area legitimately took ~30s and was aborted client-side before the (successful) server response arrived, silently producing zero results with `partial: true` instead of real data. Found via a live manual run with real Overpass data, not caught by the mocked test suite (which never waits on real latency). Fixed by raising the client timeout to `30.0`, comfortably above the query's own budget.

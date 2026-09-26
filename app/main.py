@@ -22,7 +22,10 @@ async def lifespan(app: FastAPI):
     app.state.mongo_client = client
     app.state.collection = collection
     app.state.coverage_collection = coverage_collection
-    app.state.http_client = httpx.Client(timeout=10.0)
+    # Must exceed the Overpass query's own [timeout:25] budget (see
+    # app/providers/osm_overpass.py) or the client aborts a legitimately
+    # slow-but-successful Overpass response before the server would.
+    app.state.http_client = httpx.Client(timeout=30.0)
 
     yield
 
