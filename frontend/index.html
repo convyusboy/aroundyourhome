@@ -2,25 +2,48 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Around Your Home</title>
+  <meta name="description" content="Find hospitals, restaurants, pharmacies and other places within a radius of any coordinate." />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <h1>Around Your Home</h1>
-  <form id="search-form">
-    <label>Lat <input id="lat" type="number" step="any" required /></label>
-    <label>Lng <input id="lng" type="number" step="any" required /></label>
-    <button type="button" id="use-location">Use my location</button>
-    <label>Radius (m) <input id="radius" type="number" min="100" max="10000" value="1500" /></label>
+  <header>
+    <h1>Around Your Home</h1>
+    <p class="tagline">Find what's nearby: hospitals, pharmacies, food, banks and more, within a radius you choose.</p>
+  </header>
+
+  <form id="search-form" class="card">
+    <div class="row">
+      <label>Latitude <input id="lat" type="number" step="any" required placeholder="-6.2000" /></label>
+      <label>Longitude <input id="lng" type="number" step="any" required placeholder="106.8166" /></label>
+      <label>Radius (m) <input id="radius" type="number" min="100" max="10000" value="1500" /></label>
+      <button type="button" id="use-location" class="secondary">Use my location</button>
+    </div>
     <fieldset id="categories">
-      <legend>Categories</legend>
+      <legend>Categories
+        <button type="button" id="select-all" class="link">all</button>
+        <button type="button" id="select-none" class="link">none</button>
+      </legend>
     </fieldset>
-    <button type="submit">Search</button>
+    <button type="submit" id="search-button">Search</button>
   </form>
-  <p id="status" hidden></p>
-  <div id="map"></div>
-  <ul id="results"></ul>
+
+  <p id="status" role="status" hidden></p>
+
+  <main class="layout">
+    <div id="map" aria-label="Map of results"></div>
+    <section>
+      <p id="summary" hidden></p>
+      <ul id="results"></ul>
+    </section>
+  </main>
+
+  <footer>
+    Map data &copy; OpenStreetMap contributors &middot;
+    <a href="https://github.com/convyusboy/aroundyourhome">Source</a>
+  </footer>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="/app.js"></script>
