@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app import db
 from app.config import get_settings
+from app.ratelimit import RateLimiter
 from app.routers.places import router
 
 logging.basicConfig(level=logging.INFO)
@@ -22,6 +23,7 @@ async def lifespan(app: FastAPI):
     db.ensure_coverage_indexes(coverage_collection)
 
     app.state.settings = settings
+    app.state.rate_limiter = RateLimiter(settings.rate_limit_per_min)
     app.state.mongo_client = client
     app.state.collection = collection
     app.state.coverage_collection = coverage_collection

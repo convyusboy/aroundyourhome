@@ -90,6 +90,8 @@ Overpass responds; repeats come from the cache.
 | `GOOGLE_PLACES_API_KEY` | *(unset)* | Optional. Enables Google Places as primary source |
 | `CACHE_TTL_DAYS` | `14` | How long a cached search counts as fresh |
 | `DEFAULT_RADIUS_M` | `1500` | Radius used when the request omits one |
+| `RATE_LIMIT_PER_MIN` | `0` (off) | Max `/api/places` requests per client IP per minute; `429` beyond it |
+| `PORT` | `8000` | Port to listen on (hosts like Render set this) |
 
 ## API
 
@@ -120,6 +122,21 @@ Overpass responds; repeats come from the cache.
 
 `GET /health` returns `{"status": "ok", "mongo": true}`. Interactive API docs are at `/docs`.
 
+## Deploy (Render + MongoDB Atlas, both free tier)
+
+The repo includes a [`render.yaml`](render.yaml) blueprint.
+
+1. **Database:** create a free M0 cluster on [MongoDB Atlas](https://www.mongodb.com/atlas),
+   add a database user, and under *Network Access* allow `0.0.0.0/0` (Render's free tier has
+   no fixed outbound IP). Copy the `mongodb+srv://...` connection string.
+2. **App:** on [Render](https://render.com) choose *New → Blueprint*, select this repo, and
+   paste the connection string as `MONGO_URI` when prompted.
+3. Wait for the build; `/health` should return `{"status": "ok", "mongo": true}`.
+
+Notes: the free instance sleeps when idle, so the first request after a pause takes about
+a minute. `RATE_LIMIT_PER_MIN=30` is preset in the blueprint because the endpoint is public
+and each cache miss triggers an upstream Overpass query.
+
 ## Tests
 
     python3 -m venv .venv
@@ -127,7 +144,7 @@ Overpass responds; repeats come from the cache.
     pip install -r requirements-dev.txt
     pytest
 
-The unit suite (50 tests) uses `mongomock` and `httpx.MockTransport`, so it needs no
+The unit suite (55 tests) uses `mongomock` and `httpx.MockTransport`, so it needs no
 database or network.
 
 ### Browser (UI) tests

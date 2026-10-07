@@ -1,14 +1,15 @@
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
+from app.ratelimit import enforce_rate_limit
 from app.models import CATEGORIES, PlaceOut, PlacesResponse, QueryEcho
 from app.services import places_service
 
 router = APIRouter()
 
 
-@router.get("/api/places", response_model=PlacesResponse)
+@router.get("/api/places", response_model=PlacesResponse, dependencies=[Depends(enforce_rate_limit)])
 def get_places(
     request: Request,
     lat: float = Query(...),

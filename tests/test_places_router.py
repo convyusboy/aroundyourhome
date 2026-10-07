@@ -3,6 +3,7 @@ from fastapi.testclient import TestClient
 
 from app.models import CATEGORIES
 from app.config import Settings
+from app.ratelimit import RateLimiter
 from app.routers.places import router
 
 
@@ -15,6 +16,7 @@ def make_app(monkeypatch, search_places_result=([], False)):
         cache_ttl_days=14,
         default_radius_m=1500,
     )
+    app.state.rate_limiter = RateLimiter(0)
     app.state.collection = object()
     app.state.coverage_collection = object()
     app.state.http_client = object()
@@ -120,3 +122,13 @@ def test_successful_response_shape(monkeypatch):
         "lat": -6.2, "lng": 106.8, "radius": 1500, "categories": ["hospital"]
     }
     assert body["results"][0]["name"] == "City Hospital"
+
+
+def test_returns_429_once_rate_limit_is_exceeded(monkeypatch):
+    app = make_app(monkeypatch)
+    app.state.rate_limiter = RateLimiter(2)
+    client = TestClient(app)
+
+    statuses = [client.get("/api/places?lat=-6.2&lng=106.8").status_code for _ in range(3)]
+
+    assert statuses == [200, 200, 429]

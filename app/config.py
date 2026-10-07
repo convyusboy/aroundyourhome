@@ -10,6 +10,7 @@ class Settings:
     google_places_api_key: Optional[str]
     cache_ttl_days: int
     default_radius_m: int
+    rate_limit_per_min: int = 0
 
 
 @lru_cache
@@ -19,4 +20,5 @@ def get_settings() -> Settings:
         google_places_api_key=os.environ.get("GOOGLE_PLACES_API_KEY") or None,
         cache_ttl_days=int(os.environ.get("CACHE_TTL_DAYS", "14")),
         default_radius_m=int(os.environ.get("DEFAULT_RADIUS_M", "1500")),
+        rate_limit_per_min=int(os.environ.get("RATE_LIMIT_PER_MIN", "0")),
     )

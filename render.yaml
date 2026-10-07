@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: aroundyourhome
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: MONGO_URI
+        sync: false          # paste your MongoDB Atlas connection string in the dashboard
+      - key: RATE_LIMIT_PER_MIN
+        value: "30"
+      - key: CACHE_TTL_DAYS
+        value: "14"
