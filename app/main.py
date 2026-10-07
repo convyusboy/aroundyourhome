@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 import httpx
@@ -7,6 +8,8 @@ from fastapi.staticfiles import StaticFiles
 from app import db
 from app.config import get_settings
 from app.routers.places import router
+
+logging.basicConfig(level=logging.INFO)
 
 
 @asynccontextmanager

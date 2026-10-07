@@ -174,3 +174,17 @@ def test_results_sorted_by_distance():
     )
 
     assert [r["name"] for r in results] == ["Near Park", "Far Park"]
+
+
+def test_logs_cache_hit_when_coverage_is_fresh(caplog):
+    import logging
+    collection, coverage_collection = make_collections()
+    now = datetime.now(timezone.utc)
+    record_coverage(coverage_collection, -6.2, 106.8, 1000, "pharmacy", fetched_at=now)
+    client = httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(500)))
+
+    with caplog.at_level(logging.INFO, logger="app.services.places_service"):
+        search_places(collection, coverage_collection, client, make_settings(),
+                      -6.2, 106.8, 1000, ["pharmacy"])
+
+    assert any("cache hit" in rec.message for rec in caplog.records)
