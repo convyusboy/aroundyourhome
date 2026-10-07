@@ -127,8 +127,20 @@ Overpass responds; repeats come from the cache.
     pip install -r requirements-dev.txt
     pytest
 
-The suite (50 tests) uses `mongomock` and `httpx.MockTransport`, so it needs no database
-or network. CI runs it on every push.
+The unit suite (50 tests) uses `mongomock` and `httpx.MockTransport`, so it needs no
+database or network.
+
+### Browser (UI) tests
+
+    pip install -r requirements-e2e.txt
+    playwright install chromium
+    pytest tests/e2e -o addopts=""
+
+13 Playwright tests drive the real page in Chromium against the real FastAPI app (backed by
+`mongomock`), with `/api/places` mocked. They cover the loading state, results and markers,
+empty/error/partial states, click-to-focus popups, shareable links, and that result text
+isn't rendered as HTML. Leaflet loads from a CDN, so they need internet access. Add `--headed`
+to watch them run. CI runs both suites on every push.
 
 ## Limitations
 

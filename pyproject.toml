@@ -1,3 +1,5 @@
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+# Browser tests are opt-in: pytest tests/e2e -o addopts=""
+addopts = "--ignore=tests/e2e"
