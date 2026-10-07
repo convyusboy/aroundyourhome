@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
+from app.models import CATEGORIES
 from app.config import Settings
 from app.routers.places import router
 
@@ -96,7 +97,7 @@ def test_defaults_radius_and_categories_when_omitted(monkeypatch):
 
     assert response.status_code == 200
     assert captured["radius_m"] == 1500
-    assert len(captured["categories"]) == 11
+    assert captured["categories"] == CATEGORIES
 
 
 def test_successful_response_shape(monkeypatch):

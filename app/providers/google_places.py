@@ -24,6 +24,9 @@ CATEGORY_TO_GOOGLE_TYPES: dict[str, list[str]] = {
     "police": ["police"],
     "gym": ["gym"],
     "park": ["park"],
+    "cafe": ["cafe"],
+    "clinic": ["doctor"],
+    "convenience_store": ["convenience_store"],
 }
 
 GOOGLE_TYPE_TO_CATEGORY: dict[str, str] = {

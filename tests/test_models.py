@@ -7,7 +7,7 @@ def test_categories_is_the_fixed_v1_list():
     assert CATEGORIES == [
         "hospital", "restaurant", "pharmacy", "school", "bank_atm",
         "place_of_worship", "supermarket", "gas_station", "police",
-        "gym", "park",
+        "gym", "park", "cafe", "clinic", "convenience_store",
     ]
 
 

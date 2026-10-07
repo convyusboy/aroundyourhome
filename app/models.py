@@ -7,7 +7,7 @@ from pydantic import BaseModel
 CATEGORIES: list[str] = [
     "hospital", "restaurant", "pharmacy", "school", "bank_atm",
     "place_of_worship", "supermarket", "gas_station", "police",
-    "gym", "park",
+    "gym", "park", "cafe", "clinic", "convenience_store",
 ]
 
 

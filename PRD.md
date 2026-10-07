@@ -76,10 +76,11 @@ User-adjustable per request via the UI/query param, not a fixed global
 setting. Backend validates it's within 100m–10km and rejects out-of-range
 values with a 400 error.
 
-### 5.4 Categories (v1 fixed list)
+### 5.4 Categories (fixed list; cafe/clinic/convenience_store added post-v1)
 
 `hospital`, `restaurant`, `pharmacy`, `school`, `bank_atm`,
-`place_of_worship`, `supermarket`, `gas_station`, `police`, `gym`, `park`
+`place_of_worship`, `supermarket`, `gas_station`, `police`, `gym`, `park`, `cafe`, `clinic`,
+`convenience_store`
 
 ### 5.5 Data sources
 

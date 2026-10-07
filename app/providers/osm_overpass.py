@@ -23,6 +23,9 @@ CATEGORY_TO_OSM_TAGS: dict[str, list[tuple[str, str]]] = {
     "police": [("amenity", "police")],
     "gym": [("leisure", "fitness_centre")],
     "park": [("leisure", "park")],
+    "cafe": [("amenity", "cafe")],
+    "clinic": [("amenity", "clinic"), ("amenity", "doctors")],
+    "convenience_store": [("shop", "convenience")],
 }
 
 OSM_TAG_TO_CATEGORY: dict[tuple[str, str], str] = {
