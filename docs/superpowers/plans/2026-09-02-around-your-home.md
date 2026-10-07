@@ -2301,12 +2301,12 @@ Manual verification (run once, confirm each item):
 docker-compose up --build
 ```
 
-- [ ] Open `http://localhost:8000/health` — returns `{"status": "ok", "mongo": true}`
-- [ ] Open `http://localhost:8000/` — form, map, and category checkboxes render
-- [ ] Enter a real coordinate, submit — results list populates with markers on the map
-- [ ] Check container logs (`docker-compose logs app`) — confirm a second identical search within the TTL window does not log a new outbound call to Google/Overpass (cache hit)
-- [ ] Submit with `radius=50` via `curl "http://localhost:8000/api/places?lat=-6.2&lng=106.8&radius=50"` — returns HTTP 400
-- [ ] Submit with `categories=not_a_category` — returns HTTP 400
+- [x] Open `http://localhost:8000/health` — returns `{"status": "ok", "mongo": true}`
+- [x] Open `http://localhost:8000/` — form, map, and category checkboxes render
+- [x] Enter a real coordinate, submit — results list populates with markers on the map
+- [x] Check container logs (`docker-compose logs app`) — confirm a second identical search within the TTL window does not log a new outbound call to Google/Overpass (cache hit)
+- [x] Submit with `radius=50` via `curl "http://localhost:8000/api/places?lat=-6.2&lng=106.8&radius=50"` — returns HTTP 400
+- [x] Submit with `categories=not_a_category` — returns HTTP 400
 
 - [ ] **Step 4: Run the full automated test suite one more time**
 
