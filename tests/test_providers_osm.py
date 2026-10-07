@@ -151,3 +151,39 @@ def test_fetch_places_bank_atm_covers_both_tags_in_one_query():
 
     assert '"amenity"="bank"' in captured["query"]
     assert '"amenity"="atm"' in captured["query"]
+
+
+def test_fetch_places_falls_back_to_next_mirror_on_504():
+    urls = []
+
+    def handler(request):
+        urls.append(str(request.url))
+        if len(urls) == 1:
+            return httpx.Response(504)
+        return httpx.Response(200, json={"elements": []})
+
+    results = fetch_places(
+        make_client(handler), lat=-6.2, lng=106.8, radius_m=1000,
+        categories=["hospital"], sleep=lambda s: None,
+    )
+
+    assert results == {"hospital": []}
+    assert len(urls) == 2 and urls[0] != urls[1]
+
+
+def test_fetch_places_does_not_retry_non_retryable_status():
+    calls = []
+
+    def handler(request):
+        calls.append(1)
+        return httpx.Response(400)
+
+    try:
+        fetch_places(
+            make_client(handler), lat=-6.2, lng=106.8, radius_m=1000,
+            categories=["hospital"], sleep=lambda s: None,
+        )
+        assert False, "expected OverpassError"
+    except OverpassError:
+        pass
+    assert len(calls) == 1
