@@ -23,3 +23,4 @@ def test_app_js_is_served(monkeypatch):
 
     assert response.status_code == 200
     assert "/api/places" in response.text
+    assert "Searching" in response.text

@@ -51,7 +51,11 @@ document.getElementById("search-form").addEventListener("submit", async (event) 
     categoriesFieldset.querySelectorAll("input:checked")
   ).map((input) => input.value);
 
-  statusEl.hidden = true;
+  const submitButton = event.submitter || document.querySelector("#search-form [type=submit]");
+  submitButton.disabled = true;
+  statusEl.className = "loading";
+  statusEl.textContent = "Searching… first searches in a new area can take up to 30 seconds.";
+  statusEl.hidden = false;
   const params = new URLSearchParams({ lat, lng, radius, categories: selected.join(",") });
 
   let data;
@@ -63,10 +67,16 @@ document.getElementById("search-form").addEventListener("submit", async (event) 
     }
     data = await response.json();
   } catch (err) {
+    statusEl.className = "";
     statusEl.textContent = err.message;
     statusEl.hidden = false;
     return;
+  } finally {
+    submitButton.disabled = false;
   }
+
+  statusEl.className = "";
+  statusEl.hidden = true;
 
   markers.forEach((marker) => map.removeLayer(marker));
   markers = [];
