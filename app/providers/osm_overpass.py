@@ -34,7 +34,7 @@ class OverpassError(Exception):
 
 def _build_query(lat: float, lng: float, radius_m: int, tags: list[tuple[str, str]]) -> str:
     clauses = "".join(
-        f'node["{key}"="{value}"](around:{radius_m},{lat},{lng});'
+        f'nwr["{key}"="{value}"](around:{radius_m},{lat},{lng});'
         for key, value in tags
     )
     return f"[out:json][timeout:25];({clauses});out center;"
@@ -90,7 +90,7 @@ def fetch_places(
 
         results[category].append(
             NormalizedPlace(
-                place_id=str(element["id"]),
+                place_id=f'{element.get("type", "node")}/{element["id"]}',
                 source="osm",
                 name=tags.get("name", "Unnamed"),
                 category=category,

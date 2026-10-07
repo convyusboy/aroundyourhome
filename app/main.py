@@ -25,7 +25,11 @@ async def lifespan(app: FastAPI):
     # Must exceed the Overpass query's own [timeout:25] budget (see
     # app/providers/osm_overpass.py) or the client aborts a legitimately
     # slow-but-successful Overpass response before the server would.
-    app.state.http_client = httpx.Client(timeout=30.0)
+    # Overpass rejects the default python-httpx User-Agent with HTTP 406.
+    app.state.http_client = httpx.Client(
+        timeout=30.0,
+        headers={"User-Agent": "aroundyourhome/0.1 (personal local tool)"},
+    )
 
     yield
 

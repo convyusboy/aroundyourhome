@@ -10,7 +10,10 @@ def make_client(handler):
 
 
 def test_fetch_places_batches_categories_into_one_query_and_normalizes():
+    sent = {}
+
     def handler(request):
+        sent["query"] = parse_qs(request.content.decode())["data"][0]
         return httpx.Response(
             200,
             json={
@@ -42,10 +45,12 @@ def test_fetch_places_batches_categories_into_one_query_and_normalizes():
         client, lat=-6.2, lng=106.8, radius_m=1000,
         categories=["pharmacy", "park"], sleep=lambda s: None,
     )
+    assert 'nwr["leisure"="park"]' in sent["query"]
 
     assert set(results.keys()) == {"pharmacy", "park"}
     pharmacy = results["pharmacy"][0]
-    assert pharmacy.place_id == "111"
+    assert pharmacy.place_id == "node/111"
+    assert results["park"][0].place_id == "way/222"
     assert pharmacy.source == "osm"
     assert pharmacy.name == "Community Pharmacy"
     assert pharmacy.category == "pharmacy"
